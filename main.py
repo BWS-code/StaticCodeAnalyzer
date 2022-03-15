@@ -1,20 +1,23 @@
 import re
 from errors import errors_dict
+from pathlib import Path
+from sys import argv
 
 
 class CodeAnalyzer:
-    def __init__(self, filepath: str, error_map: dict[str, str]):
-        self.filepath = filepath
+    def __init__(self, base_path: str, error_map: dict[str, str]):
+        self.base_path = base_path
         self.error_map = error_map
         self.lines = None
-        self.errors_results = []
+        self.errors_results = None
 
-    def open_file(self) -> None:
-        with open(self.filepath, 'r') as file:
+    def open_file(self, path: str) -> None:
+        with open(path, 'r') as file:
             self.lines = [line for line in file.readlines()]
 
     def run_checks(self, letter: str, qty: int) -> None:
         checks = [''.join((f'self.check_{letter}00', str(i), '(line, line_ind)')) for i in range(1, qty)]
+        self.errors_results = []
         for line in self.lines:
             line_ind = self.lines.index(line)
             for check in checks:
@@ -34,9 +37,10 @@ class CodeAnalyzer:
 
     def check_s003(self, line: str, line_ind: int) -> str | None:
         if ';' in line:
-            is_in_string = True if (line[line.index(';') + 1:].count("'") +
-                                    line[line.index(';') + 1:].count('"')) % 2 else False
-            is_in_comment = True if '#' in line[:line.index(';') + 1] and not is_in_string else False
+            line_ch = [ch for ch in line if ch in ('"', "'", '#', ';')]
+            is_in_string = True if (line_ch[line_ch.index(';') + 1:].count("'") +
+                                    line_ch[line_ch.index(';') + 1:].count('"')) % 2 else False
+            is_in_comment = True if '#' in line_ch[:line_ch.index(';') + 1] and not is_in_string else False
             if not is_in_string and not is_in_comment:
                 return f'Line {line_ind + 1}: S003 Unnecessary semicolon'
             return None
@@ -56,17 +60,30 @@ class CodeAnalyzer:
             return f'Line {line_ind + 1}: S006 More than two blank lines used before this line'
         return None
 
-    def print_errs(self) -> None:
+    def print_errs(self, path: str) -> None:
         if self.errors_results:
-            print('\n'.join(self.errors_results))
+            for err in self.errors_results:
+                print(path, end=': ')
+                print(err)
+
+    def get_files(self) -> list:
+        if str(self.base_path).endswith('.py'):
+            return [self.base_path]
+        folders = [self.base_path] + [entry for entry in self.base_path.iterdir() if entry.is_dir()]
+        files = [entry for path in folders for entry in path.iterdir() if
+                 entry.is_file() and entry.name.endswith('.py')]
+        return files
 
     def analyze(self) -> None:
-        self.open_file()
-        self.run_checks('s', 7)
-        self.print_errs()
+        for path in self.get_files():
+            self.open_file(path)
+            self.run_checks('s', 7)
+            self.print_errs(path)
 
-filename = input()
-my_analyzer = CodeAnalyzer(filename, errors_dict)
+
+args = argv
+user_path = Path(args[1])
+my_analyzer = CodeAnalyzer(user_path, errors_dict)
 
 if __name__ == '__main__':
     my_analyzer.analyze()
