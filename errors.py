@@ -37,6 +37,25 @@ def check_s006(line: str, line_ind: int, lines: list) -> str | None:
         return f'Line {line_ind + 1}: S006 More than two blank lines used before this line'
     return None
 
+def check_s007(line: str, line_ind: int, lines: list) -> str | None:
+    if re.match(r'^(class|def)\s\s+', line.lstrip()):
+        construction_name = line.lstrip().split()[0]
+        return f"Line {line_ind + 1}: S007 Too many spaces after '{construction_name}'"
+    return None
+
+def check_s008(line: str, line_ind: int, lines: list) -> str | None:
+    if re.match(r'^class\s+[a-z]', line.lstrip()):
+        class_name = line.lstrip().split()[1]
+        return f"Line {line_ind + 1}: S008 Class name '{class_name}' should use CamelCase"
+    return None
+
+def check_s009(line: str, line_ind: int, lines: list) -> str | None:
+    if re.match(r'^def\s+[A-Z]', line.lstrip()):
+        def_name = line.lstrip().split()[1]
+        return f"Line {line_ind + 1}: S009 Function name '{def_name}' should use snake_case"
+    return None
+
+
 
 errors_dict = {
     'S001': 'Too long',
@@ -44,5 +63,8 @@ errors_dict = {
     'S003': 'Unnecessary semicolon',
     'S004': 'At least two spaces required before inline comments',
     'S005': 'TODO found',
-    'S006': 'More than two blank lines used before this line'
+    'S006': 'More than two blank lines used before this line',
+    'S007': 'Too many spaces after <construction_name>',
+    'S008': 'Class name <class_name> should use CamelCase',
+    'S009': 'Function name <function_name> should use snake_case',
 }
