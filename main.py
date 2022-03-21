@@ -11,16 +11,8 @@ class CodeAnalyzer:
         self.lines = None
         self.errors_results = None
         self.check_initials = check_initials
-        self.checks = checks
+        self.checks = checks + 1
         self.formatting = formatting
-
-    def get_files(self) -> list:
-        if str(self.base_path).endswith('.py'):
-            return [self.base_path]
-        folders = [self.base_path] + [entry for entry in self.base_path.iterdir() if entry.is_dir()]
-        files = [entry for path in folders for entry in path.iterdir() if
-                 entry.is_file() and entry.name.endswith('.py')]
-        return files
 
     def open_file(self, path: str) -> None:
         with open(path, 'r') as file:
@@ -44,7 +36,15 @@ class CodeAnalyzer:
                     print(path, end=': ')
                 print(err)
 
-    def main(self) -> None:
+    def get_files(self) -> list:
+        if str(self.base_path).endswith('.py'):
+            return [self.base_path]
+        folders = [self.base_path] + [entry for entry in self.base_path.iterdir() if entry.is_dir()]
+        files = [entry for path in folders for entry in path.iterdir() if
+                 entry.is_file() and entry.name.endswith('.py')]
+        return files
+
+    def analyze(self) -> None:
         for path in self.get_files():
             self.open_file(path)
             for letter in self.check_initials:
@@ -55,9 +55,10 @@ class CodeAnalyzer:
 args = argv
 user_path = Path(args[1])
 check_letters = ['s']
+
 my_analyzer = CodeAnalyzer(user_path, errors_dict,
-                           check_letters, checks=7,
+                           check_letters, checks=9,
                            formatting=1)
 
 if __name__ == '__main__':
-    my_analyzer.main()
+    my_analyzer.analyze()
