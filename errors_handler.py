@@ -1,4 +1,5 @@
 import re
+import ast
 
 
 def check_s001(line: str, line_ind: int, lines: list, max_length=79) -> str | None:
@@ -55,16 +56,31 @@ def check_s009(line: str, line_ind: int, lines: list) -> str | None:
         return f"Line {line_ind + 1}: S009 Function name '{def_name}' should use snake_case"
     return None
 
+def check_s010(tree) -> list:
+    res = []
+    for el in ast.walk(tree):
+        if isinstance(el, ast.FunctionDef):
+            for argument_name in [a.arg for a in el.args.args]:
+                if re.match(r'^[A-Z]', argument_name):
+                    res.append(f"Line {el.lineno}: S010 Argument name '{argument_name}' should be written snake_case")
+    return res
 
 
-errors_dict = {
-    'S001': 'Too long',
-    'S002': 'Indentation is not a multiple of four',
-    'S003': 'Unnecessary semicolon',
-    'S004': 'At least two spaces required before inline comments',
-    'S005': 'TODO found',
-    'S006': 'More than two blank lines used before this line',
-    'S007': 'Too many spaces after <construction_name>',
-    'S008': 'Class name <class_name> should use CamelCase',
-    'S009': 'Function name <function_name> should use snake_case',
-}
+def check_s011(tree) -> list:
+    res = []
+    for el in ast.walk(tree):
+        if isinstance(el, ast.Name) and isinstance(el.ctx, ast.Store):
+            variable_name = el.id
+            if re.match(r'^[A-Z]', variable_name):
+                res.append(f"Line {el.lineno}: S011 Variable name '{variable_name}' should be written snake_case")
+    return res
+
+
+def check_s012(tree) -> list:
+    res = []
+    for el in ast.walk(tree):
+        if isinstance(el, ast.FunctionDef):
+            for item in el.args.defaults:
+                if isinstance(item, ast.List):
+                    res.append(f"Line {el.lineno}: S012 Default argument value is mutable")
+    return res
